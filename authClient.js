@@ -1,4 +1,4 @@
-// authClient.js
+// authClient.js with dynamic redirect_uri support
 function base64URLEncode(str) {
   return btoa(String.fromCharCode(...new Uint8Array(str)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -20,18 +20,23 @@ const authClient = {
   async loginRedirect() {
     const { code_verifier, code_challenge } = await generatePKCE();
     localStorage.setItem('pkce_verifier', code_verifier);
-    window.location.href = `${this.baseUrl}/login?code_challenge=${code_challenge}`;
+
+    const redirect_uri = window.location.origin + window.location.pathname;
+
+    window.location.href = `${this.baseUrl}/login?code_challenge=${code_challenge}&redirect_uri=${encodeURIComponent(redirect_uri)}`;
   },
 
   async handleCallback() {
     const code = new URLSearchParams(window.location.search).get('code');
     const code_verifier = localStorage.getItem('pkce_verifier');
+    const redirect_uri = window.location.origin + window.location.pathname;
+
     if (!code || !code_verifier) throw new Error('Missing code or verifier');
 
     const res = await fetch(`${this.baseUrl}/callback`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, code_verifier })
+      body: JSON.stringify({ code, code_verifier, redirect_uri })
     });
 
     const data = await res.json();
