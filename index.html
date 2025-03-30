@@ -1,51 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Microsoft Auth (Vercel)</title>
-  <script type="module" src="authClient.js"></script>
-  <script>
-    import authClient from './authClient.js';
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      const loginBtn = document.getElementById('login');
-      const content = document.getElementById('content');
-
-      loginBtn.onclick = () => authClient.loginRedirect();
-
-      if (window.location.search.includes('code=')) {
-        try {
-          const data = await authClient.handleCallback();
-          const user = data.user;
-
-          content.innerHTML = `
-            <div style="font-family: sans-serif;">
-              <p><strong>Name:</strong> ${user.displayName}</p>
-              <p><strong>Email:</strong> ${user.mail || user.userPrincipalName}</p>
-              <p><strong>JWT:</strong> <code style="word-break: break-all;">${data.appToken}</code></p>
-              <button onclick="authClient.logout()">Logout</button>
-            </div>
-          `;
-        } catch (err) {
-          content.innerHTML = `<p style="color:red;">Login failed: ${err.message}</p>`;
-        }
-      } else if (authClient.isAuthenticated()) {
-        const user = authClient.getUser();
-        content.innerHTML = `
-          <div style="font-family: sans-serif;">
-            <p><strong>Name:</strong> ${user.displayName}</p>
-            <p><strong>Email:</strong> ${user.mail || user.userPrincipalName}</p>
-            <button onclick="authClient.logout()">Logout</button>
-          </div>
-        `;
-      }
-    });
-  </script>
 </head>
 <body style="padding: 2rem; font-family: sans-serif;">
   <h1>Microsoft Auth (Vercel)</h1>
   <div id="content">
     <button id="login">Login with Microsoft</button>
   </div>
+
+  <script type="module">
+    import authClient from './authClient.js';
+
+    const loginBtn = document.getElementById('login');
+    const content = document.getElementById('content');
+
+    loginBtn.onclick = () => authClient.loginRedirect();
+
+    if (window.location.search.includes('code=')) {
+      try {
+        const data = await authClient.handleCallback();
+        const user = data.user;
+
+        content.innerHTML = `
+          <div style="font-family: sans-serif;">
+            <p><strong>Name:</strong> ${user.displayName}</p>
+            <p><strong>Email:</strong> ${user.mail || user.userPrincipalName}</p>
+            <p><strong>JWT:</strong> <code style="word-break: break-all;">${data.appToken}</code></p>
+            <button onclick="authClient.logout()">Logout</button>
+          </div>
+        `;
+      } catch (err) {
+        content.innerHTML = `<p style="color:red;">Login failed: ${err.message}</p>`;
+      }
+    } else if (authClient.isAuthenticated()) {
+      const user = authClient.getUser();
+      content.innerHTML = `
+        <div style="font-family: sans-serif;">
+          <p><strong>Name:</strong> ${user.displayName}</p>
+          <p><strong>Email:</strong> ${user.mail || user.userPrincipalName}</p>
+          <button onclick="authClient.logout()">Logout</button>
+        </div>
+      `;
+    }
+  </script>
 </body>
 </html>
