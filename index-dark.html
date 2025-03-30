@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Microsoft Auth (Dark)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'media'
+    };
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+  <div class="bg-gray-800 shadow-md rounded p-6 max-w-md w-full">
+    <h1 class="text-2xl font-bold mb-4">Microsoft Auth (Dark Mode)</h1>
+    <div id="content" class="text-gray-300">Loading...</div>
+  </div>
+
+  <script type="module">
+    import authClient from './authClient.js';
+
+    const content = document.getElementById('content');
+    let user = null;
+
+    if (authClient.isAuthenticated()) {
+      user = authClient.getUser();
+      showUser();
+    } else if (window.location.search.includes('code=')) {
+      content.innerHTML = 'Completing login...';
+      authClient.handleCallback().then(result => {
+        user = result.user;
+        showUser();
+        showDecodedJWT(result.appToken);
+      }).catch(err => {
+        console.error(err);
+        content.innerHTML = 'Login failed: ' + err.message;
+      });
+    } else {
+      showLoginButton();
+    }
+
+    function showLoginButton() {
+      content.innerHTML = '<button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" id="login">Login with Microsoft</button>';
+      document.getElementById('login').onclick = () => authClient.loginRedirect();
+    }
+
+    function showUser() {
+      content.innerHTML = `
+        <div class="space-y-3">
+          <p><strong>Name:</strong> ${user.displayName}</p>
+          <p><strong>Email:</strong> ${user.mail || user.userPrincipalName}</p>
+          <button class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" id="logout">Logout</button>
+          <pre id="jwt" class="mt-4 text-xs text-gray-400 whitespace-pre-wrap"></pre>
+        </div>`;
+      document.getElementById('logout').onclick = () => authClient.logout();
+    }
+
+    function showDecodedJWT(token) {
+      const parts = token.split('.');
+      if (parts.length !== 3) return;
+      const payload = JSON.parse(atob(parts[1]));
+      document.getElementById('jwt').textContent = JSON.stringify(payload, null, 2);
+    }
+  </script>
+</body>
+</html>
