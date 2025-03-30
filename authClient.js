@@ -1,4 +1,4 @@
-// authClient.js with dynamic redirect_uri support
+// authClient.js for Vercel backend
 function base64URLEncode(str) {
   return btoa(String.fromCharCode(...new Uint8Array(str)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -15,7 +15,7 @@ async function generatePKCE() {
 }
 
 const authClient = {
-  baseUrl: 'https://auth.finanzam.com',
+  baseUrl: 'https://auth-sigma-ivory.vercel.app/api'
 
   async loginRedirect() {
     const { code_verifier, code_challenge } = await generatePKCE();
@@ -23,7 +23,8 @@ const authClient = {
 
     const redirect_uri = window.location.origin + window.location.pathname;
 
-    window.location.href = `${this.baseUrl}/login?code_challenge=${code_challenge}&redirect_uri=${encodeURIComponent(redirect_uri)}`;
+    const loginUrl = \`\${this.baseUrl}/login?code_challenge=\${code_challenge}&redirect_uri=\${encodeURIComponent(redirect_uri)}\`;
+    window.location.href = loginUrl;
   },
 
   async handleCallback() {
@@ -33,13 +34,15 @@ const authClient = {
 
     if (!code || !code_verifier) throw new Error('Missing code or verifier');
 
-    const res = await fetch(`${this.baseUrl}/callback`, {
+    const res = await fetch(\`\${this.baseUrl}/callback\`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, code_verifier, redirect_uri })
     });
 
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Authentication failed');
+
     localStorage.setItem('msauth', JSON.stringify(data));
     return data;
   },
